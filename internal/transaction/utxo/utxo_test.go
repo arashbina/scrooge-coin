@@ -56,7 +56,7 @@ func TestEquality(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		if !test.u1.IsEqual(test.u2) == test.res {
+		if test.u1.IsEqual(test.u2) != test.res {
 			t.Errorf("test: %d\n expected the comparison to be %t but wasn't", i, test.res)
 		}
 	}
