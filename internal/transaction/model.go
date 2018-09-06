@@ -1,7 +1,5 @@
 package transaction
 
-import "crypto"
-
 type Transaction struct {
 	Hash    []byte
 	Inputs  []TXInput
@@ -16,5 +14,5 @@ type TXInput struct {
 
 type TXOutput struct {
 	Value   float64
-	Address crypto.PublicKey
+	Address []byte
 }
