@@ -29,3 +29,26 @@ func NewPoolFromPool(p UTXOPool) {
 		pool[k] = v
 	}
 }
+
+// GetAllUTXOs returns all UTXOs in the main pool
+func GetAllUTXOs() []UTXO {
+
+	utxos := make([]UTXO, len(pool))
+
+	i := 0
+	for _, u := range pool {
+
+		utxos[i] = u
+		i++
+	}
+
+	return utxos
+}
+
+func PoolContainsUTXO(u UTXO) bool {
+
+	h := u.HashCode()
+	_, ok := pool[h]
+
+	return ok
+}
