@@ -18,43 +18,23 @@ func (t Transaction) GetRawDataToSign(index int) ([]byte, error) {
 		return nil, fmt.Errorf("requested input index does not exist in the transation")
 	}
 
-	// put in the previous hash of the input into the buffer
 	input := t.Inputs[index]
-	_, err := b.Write(input.PrevTxHash)
-	if err != nil {
-		return nil, err
-	}
 
-	// convert the index into bytes and put into the buffer
-	bi := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bi, uint64(input.OutputIndex))
-	_, err = b.Write(bi)
+	err := input.addBytesNoSig(&b)
 	if err != nil {
 		return nil, err
 	}
 
 	// convert all outputs to bytes and put into the buffer
 	for _, output := range t.Outputs {
-		bv := make([]byte, 8)
-		binary.LittleEndian.PutUint64(bv, math.Float64bits(output.Value))
-		_, err = b.Write(bv)
-		if err != nil {
-			return nil, err
-		}
-		_, err = b.Write(output.Address)
+
+		err := output.addBytes(&b)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// read the bytes off the buffer and send them back
-	rawBytes := make([]byte, b.Len())
-	_, err = b.Read(rawBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return rawBytes, nil
+	return b.Bytes(), nil
 }
 
 // GetRawTransaction returns raw transaction to be used when signing a complete block
@@ -63,14 +43,8 @@ func (t Transaction) GetRawTransaction() ([]byte, error) {
 	var b bytes.Buffer
 
 	for _, input := range t.Inputs {
-		_, err := b.Write(input.PrevTxHash)
-		if err != nil {
-			return nil, err
-		}
 
-		bi := make([]byte, 8)
-		binary.LittleEndian.PutUint64(bi, uint64(input.OutputIndex))
-		_, err = b.Write(bi)
+		err := input.addBytesNoSig(&b)
 		if err != nil {
 			return nil, err
 		}
@@ -83,23 +57,44 @@ func (t Transaction) GetRawTransaction() ([]byte, error) {
 
 	for _, output := range t.Outputs {
 
-		bv := make([]byte, 8)
-		binary.LittleEndian.PutUint64(bv, math.Float64bits(output.Value))
-		_, err := b.Write(bv)
-		if err != nil {
-			return nil, err
-		}
-		_, err = b.Write(output.Address)
+		err := output.addBytes(&b)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	rawBytes := make([]byte, b.Len())
-	_, err := b.Read(rawBytes)
+	return b.Bytes(), nil
+}
+
+func (input TXInput) addBytesNoSig(buf *bytes.Buffer) error {
+
+	_, err := buf.Write(input.PrevTxHash)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return rawBytes, nil
+	bi := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bi, uint64(input.OutputIndex))
+	_, err = buf.Write(bi)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (output TXOutput) addBytes(buf *bytes.Buffer) error {
+
+	bv := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bv, math.Float64bits(output.Value))
+	_, err := buf.Write(bv)
+	if err != nil {
+		return err
+	}
+	_, err = buf.Write(output.Address)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
