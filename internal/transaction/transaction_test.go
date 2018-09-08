@@ -9,8 +9,8 @@ func TestGetRawDataToSign(t *testing.T) {
 
 	input := TXInput{
 		PrevTxHash:  []byte("hash1"),
-		OutputIndex: 0,
-		Signature:   []byte("hash1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?publicKey1"),
+		OutputIndex: 1,
+		Signature:   []byte("hash1\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?publicKey1"),
 	}
 
 	output := TXOutput{
@@ -37,8 +37,8 @@ func TestGetRawTransaction(t *testing.T) {
 
 	input := TXInput{
 		PrevTxHash:  []byte("hash1"),
-		OutputIndex: 0,
-		Signature:   []byte("hash1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?publicKey1"),
+		OutputIndex: 1,
+		Signature:   []byte("signature1"),
 	}
 
 	output := TXOutput{
@@ -51,8 +51,14 @@ func TestGetRawTransaction(t *testing.T) {
 		Outputs: []TXOutput{output},
 	}
 
+	expected := "hash1\x01\x00\x00\x00\x00\x00\x00\x00signature1\x00\x00\x00\x00\x00\x00\xf0?publicKey1"
+
 	data, err := tx.GetRawTransaction()
 	if err != nil || data == nil {
 		t.Errorf("could not get transaction: %s", err)
+	}
+
+	if cmp := bytes.Compare([]byte(expected), data); cmp != 0 {
+		t.Errorf("raw bytes mismatch. Expected %q, Got: %q", expected, data)
 	}
 }

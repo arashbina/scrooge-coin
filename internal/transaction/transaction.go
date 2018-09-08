@@ -27,7 +27,7 @@ func (t Transaction) GetRawDataToSign(index int) ([]byte, error) {
 
 	// convert the index into bytes and put into the buffer
 	bi := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bi, uint64(index))
+	binary.LittleEndian.PutUint64(bi, uint64(input.OutputIndex))
 	_, err = b.Write(bi)
 	if err != nil {
 		return nil, err
@@ -60,5 +60,46 @@ func (t Transaction) GetRawDataToSign(index int) ([]byte, error) {
 // GetRawTransaction returns raw transaction to be used when signing a complete block
 func (t Transaction) GetRawTransaction() ([]byte, error) {
 
-	return nil, nil
+	var b bytes.Buffer
+
+	for _, input := range t.Inputs {
+		_, err := b.Write(input.PrevTxHash)
+		if err != nil {
+			return nil, err
+		}
+
+		bi := make([]byte, 8)
+		binary.LittleEndian.PutUint64(bi, uint64(input.OutputIndex))
+		_, err = b.Write(bi)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = b.Write(input.Signature)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, output := range t.Outputs {
+
+		bv := make([]byte, 8)
+		binary.LittleEndian.PutUint64(bv, math.Float64bits(output.Value))
+		_, err := b.Write(bv)
+		if err != nil {
+			return nil, err
+		}
+		_, err = b.Write(output.Address)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	rawBytes := make([]byte, b.Len())
+	_, err := b.Read(rawBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return rawBytes, nil
 }
